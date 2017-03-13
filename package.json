@@ -1,0 +1,27 @@
+{
+  "name": "ghost-https-nodejs-proxy",
+  "version": "0.1.0",
+  "description": "Nodejs Https Proxy for Ghost Blog",
+  "main": "ghost-https-proxy.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/J-Siu/ghost-https-nodejs-proxy.git"
+  },
+  "keywords": [
+    "ghost",
+    "https",
+    "proxy"
+  ],
+  "author": "John Siu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/J-Siu/ghost-https-nodejs-proxy/issues"
+  },
+  "homepage": "https://github.com/J-Siu/ghost-https-nodejs-proxy#readme",
+  "dependencies": {
+    "http": "*",
+    "https": "*",
+    "http-proxy": "*",
+    "url": "*"
+  }
+}
