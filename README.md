@@ -32,7 +32,11 @@ const serverCa='';
 `node ghost-https-nodejs-proxy.js`
 
 ## Changelog
-- 0.1.0 - Initial commit
+- 0.1.0
+	- Initial commit
+- 0.1.1
+	- HTTP2 support using SPDY
+	- FQDN redirect for HTTPS
 
 ## License
 

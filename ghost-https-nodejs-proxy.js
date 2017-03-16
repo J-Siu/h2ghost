@@ -1,10 +1,13 @@
-// HTTPS
+// HTTP2
 
 const fs = require('fs');
 const url = require('url');
 const http = require('http');
-const https = require('https');
+const https = require('spdy');
 const proxy = require('http-proxy').createProxyServer();
+const compression = require('compression');
+const ex = require('express')();
+const fqdn = '<your domain name>';
 
 // Fill in your certificate files
 const serverKey='';
@@ -35,13 +38,6 @@ const httpsOptions = {
 	].join(':'),
 };
 
-// HTTP Redirect to HTTPS
-
-http.createServer(function (req, res) {
-	res.writeHead(301, { "location": "https://johnsiu.com" + req.url });
-	res.end();
-}).listen(80, '0.0.0.0');
-
 // Ghost Proxy configuration
 
 proxy.on('proxyReq', function (proxyReq, req, res, options) {
@@ -57,8 +53,24 @@ proxy.on('proxyReq', function (proxyReq, req, res, options) {
 
 });
 
-// HTTPS Proxy
+ex
+	.use(compression())
+	.use((req, res) => {
+		if (req.header.host == fqdn) {
+			proxy.web(req, res, { target: 'http://localhost:2368' });
+		} else {
+			res.writeHead(301, { 'location': 'https://' + fqdn + req.url });
+			res.end();
+		}
+	})
 
-https.createServer(httpsOptions, (req, res) => {
-	proxy.web(req, res, { target: 'http://localhost:2368' })
-}).listen(443, '0.0.0.0');
+// HTTPS Server
+
+https.createServer(httpsOptions, ex).listen(443, '0.0.0.0');
+
+// HTTP Server Redirect to HTTPS
+
+http.createServer(function (req, res) {
+	res.writeHead(301, { 'location': 'https://' + fqdn + req.url });
+	res.end();
+}).listen(80, '0.0.0.0');
