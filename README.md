@@ -1,5 +1,22 @@
 # Ghost Https Nodejs Proxy
 
+
+- [Usage](#usage)
+	- [Installing](#installing)
+	- [Enable nodejs to open port 80 and 443 in Linux](#enable-nodejs-to-open-port-80-and-443-in-linux)
+	- [Configuration](#configuration)
+		- [Certificate](#certificate)
+		- [URL](#url)
+		- [HTTP to HTTPS Redirect](#http-to-https-redirect)
+		- [HTTPS URL Redirect](#https-url-redirect)
+		- [Cluster](#cluster)
+	- [Start the proxy:](#start-the-proxy)
+	- [Merge with Ghost `index.js`](#merge-with-ghost-indexjs)
+		- [Ghost using IP](#ghost-using-ip)
+		- [Ghost using Unix Socket](#ghost-using-unix-socket)
+- [Changelog](#changelog)
+- [License](#license)
+
 ## Usage
 
 ### Installing
@@ -85,7 +102,7 @@ exports.httpsPort = 443;
 
 Cluster support. Number of `exports.workers` should at least 1 if enabled.
 
-> WARNING: Cluster MUST BE DISABLED if you are going to merge `http2-proxy.js` with Ghost `index.js`. See below.
+> WARNING: Cluster MUST BE DISABLED if you are going to merge `http2-proxy.js` with Ghost `index.js`. See [below](#merge-with-ghost-indexjs).
 
 ```javascript
 exports.cluster = false;
@@ -101,6 +118,11 @@ exports.workers = 4;
 In a single server setup, `http2-proxy.js` can be started within Ghost `index.js` to use the same node instance.
 
 Put `http2-proxy.js` and `http2-proxy.config.js` into Ghost installation root.
+
+> Cluster must be disabled in this setup!
+> ```javascript
+> exports.cluster = false;
+> ```
 
 #### Ghost using IP
 
