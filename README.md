@@ -76,8 +76,10 @@ exports.url = 'example.com';
 
 Enabling this will redirect all http traffic to https.
 
+Example:
+- http://example.com/* -> https://example.com/*
+
 ```javascript
-HTTP to HTTPS redirect, eg. http://example.com -> https://example.com
 exports.httpRedirect = true;
 exports.httpPort = 80;
 ```
