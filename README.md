@@ -1,5 +1,6 @@
 # Ghost Https Nodejs Proxy
 
+> *Usage* is only update to 0.2.0. A complete update will be available at 0.3.1.
 
 - [Usage](#usage)
 	- [Installing](#installing)
@@ -156,6 +157,10 @@ It will wait 25sec before starting `http2-proxy`, ensuring Ghost socket file is 
 	- Support one-line merging with Ghost `index.js`
 	- Use http-proxy `xfwd: true` flag instead of manual header settings
 	- Use http api for redirect, remove Express dependency
+- 0.3.0
+	- Rename project to `h2ghost`
+	- Phase 1 restructure of `h2ghost.js` and `h2ghost.config.js`.
+	- `README.md` update delay to Phase 2 (next version)
 
 ## License
 
