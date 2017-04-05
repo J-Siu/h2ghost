@@ -1,24 +1,18 @@
 // HTTP2
 const
-	http2 = require('spdy') // use spdy to support http2
+	http2 = require('spdy'), // use spdy to support http2
+	express = require('express'),
+	proxy = require('http-proxy'),
+	cluster = require('cluster')
 
 function H2Ghost() {
 	this.conf = require('./h2ghost.config.js')
 	this.printConf = false
-	this.headers = []
 
-	this.setHeaders = function () {
-		console.log('setHeaders')
-		if (this.conf.optional.hpkp.length > 0)
-			this.headers.push({ name: 'Public-Key-Pins', str: this.conf.optional.hpkp });
-		if (this.conf.optional.hsts.length > 0)
-			this.headers.push({ name: 'Strict-Transport-Security', str: this.conf.optional.hsts });
-	}
-
+	// Set ENV
 	this.setEnv = function () {
 		console.log('setEnv')
 
-		// Set ENV
 		// Ignore node version
 		process.env.GHOST_NODE_VERSION_CHECK = false
 
@@ -26,12 +20,10 @@ function H2Ghost() {
 		if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development'
 
 		// Config file override NODE_ENV
-		if (this.conf.ghost.mode && this.conf.ghost.mode.length > 0)
-			process.env.NODE_ENV = this.conf.ghost.mode
+		if (this.conf.ghost.env && this.conf.ghost.env.length > 0)
+			process.env.NODE_ENV = this.conf.ghost.env
 
 		// Cmd line override config file and NODE_ENV
-		console.log(process.argv)
-
 		process.argv.forEach(arg => {
 			switch (arg.toLowerCase()) {
 				case '--pro':
@@ -54,7 +46,7 @@ function H2Ghost() {
 			}
 		})
 
-		this.conf.ghost.mode = process.env.NODE_ENV
+		this.conf.ghost.env = process.env.NODE_ENV
 
 	}
 
@@ -62,105 +54,115 @@ function H2Ghost() {
 	this.setH2GhostParam = function () {
 		console.log('setH2GhostParam')
 
-		if (this.conf.ghost.start && this.conf.ghost.start.length > 0) {
+		let tcg = this.conf.ghost	// use short hand
 
-			this.conf.ghost.start = this.conf.ghost.start.toLowerCase()
-			if (this.conf.ghost.start === 'npm') {
-				this.conf.ghost.dir = __dirname
-				this.conf.ghost.npm = true
-			} else if (this.conf.ghost.start === 'proxy') {
-				this.conf.ghost.proxy = true
-			}
-			this.conf.ghost.start = this.conf.ghost.npm || this.conf.ghost.proxy
+		if (tcg.dir === './') tcg.dir = __dirname
 
-			// Confinue with auto config if `ghost.dir` is available
-			if (this.conf.ghost.dir && this.conf.ghost.dir.length > 0) {
-				const
-					url = require('url').URL,
-					path = require('path')
-
-				this.conf.ghost.indexJs = path.join(this.conf.ghost.dir, 'index.js')
-
-				console.log(this.conf.ghost)
-
-				let
-					conf = require(path.join(this.conf.ghost.dir, 'config.js'))[this.conf.ghost.mode],
-					urlObj = new url(conf.url)
-
-				this.conf.ghost.urlHost = urlObj.host
-				this.conf.ghost.urlPort = (!urlObj.port || urlObj.port === '') ? 443 : urlObj.port
-
-				// If using proxy, setup ghost server info
-				if (this.conf.ghost.proxy)
-					if (conf.server.host)
-						this.conf.ghost.server = {
-							host: conf.server.host,
-							port: conf.server.port
-						}
-					else this.conf.ghost.server = { socketPath: conf.server.socket }
-			}
+		// Are we starting Ghost? Which mode?
+		if (tcg.start && tcg.start.length > 0) {
+			tcg.start = tcg.start.toLowerCase()
+			if (tcg.start === 'app')
+				tcg.app = true
+			else if (tcg.start === 'proxy')
+				tcg.proxy = true
+			tcg.start = tcg.app || tcg.proxy
 		}
+
+		// Confinue with auto config if `ghost.dir` is available
+		let url = require('url').URL
+		if (tcg.dir && tcg.dir.length > 0) {
+			let
+				path = require('path'),
+				conf = require(path.join(tcg.dir, 'config.js'))[tcg.env],
+				urlObj = new url(conf.url)
+
+			tcg.urlHost = urlObj.host
+			tcg.urlPort = (!urlObj.port || urlObj.port === '') ? 443 : urlObj.port
+
+			// If using proxy, setup ghost server info
+			if (conf.server.host)
+				tcg.server = {
+					host: conf.server.host,
+					port: conf.server.port
+				}
+			else tcg.server = { socketPath: conf.server.socket.path }
+		} else {
+			// Manual config
+			let
+				urlObj = new url(tcg.url)
+
+			tcg.urlHost = urlObj.host
+			tcg.urlPort = (!urlObj.port || urlObj.port === '') ? 443 : urlObj.port
+		}
+
+		// Set h2 server startDelay in ms
+		this.conf.startDelay = (tcg.server.socket && tcg.start != app) ? 20 * 1000 : 0
 	}
 
-	this.createProxyServer = function () {
-		const proxy = require('http-proxy')
+	// Start Ghost
+	this.startGhost = function (ex) {
+		console.log('startGhost: Starting')
+
+		let
+			app = (ex) ? ex : express(),
+			ghost = require(`${this.conf.ghost.dir}/core`),
+			errors = require(`${this.conf.ghost.dir}/core/server/errors`)
+
+		ghost().then((ghostServer) => {
+			console.log(`startGhost: Done`)
+			app.use(ghostServer.config.paths.subdir, ghostServer.rootApp)
+			ghostServer.start(app) // Cannot get rid of this
+		}).catch(function (err) {
+			errors.logErrorAndExit(err, err.context, err.help)
+		})
+	}
+
+	// Create http-proxy if proxy mode is used
+	this.startProxy = function (ex) {
+		console.log('startProxy')
 		options = {
 			target: this.conf.ghost.server,
 			xfwd: true
 		}
-		console.log('createProxyServer')
-		return proxy.createProxyServer(options);
+		let px = proxy.createProxyServer(options)
+		ex.all('*', (req, res) => px.web(req, res))
+	}
+
+	/* startExpress
+
+	*/
+	this.startExpress = function () {
+
+		console.log('startExpress')
+
+		let ex = express()
+
+		// HTTPS redirect
+		if (this.conf.optional.httpsRedirect) {
+			let redirectCode = (this.conf.optional.httpRedirectPermanent) ? 308 : 307
+			ex.all('*', (req, res, next) => {
+				if (req.headers.host != this.conf.ghost.urlHost) {
+					res.writeHead(redirectCode, { 'location': `https://${this.conf.ghost.urlHost}${req.url}` });
+					res.end()
+				} else next()
+			})
+		}
+
+		// Mount APP or Proxy
+		if (this.conf.ghost.app)
+			this.startGhost(ex)
+		else
+			this.startProxy(ex)
+
+		return ex
 	}
 
 	// Start H2 Server
 	this.startH2Server = function () {
-		let proxyServer;
-		if (this.conf.ghost.proxy) proxyServer = this.createProxyServer()
-
 		console.log('startH2Server')
-		let h2server = http2.createServer(this.conf.h2Options, (req, res) => {
-
-			this.headers.forEach((header) => res.setHeader(header.name, header.str))
-
-			if (!this.conf.optional.httpsRedirect || req.headers.host === this.conf.ghost.urlHost) {
-				if (this.conf.ghost.npm)
-					this.conf.ghost.app(req, res)
-				else
-					proxyServer.web(req, res);
-			}
-			else {
-				// HTTPS redirect
-				res.writeHead(301, { 'location': `https://${this.conf.ghost.urlHost}${req.url}` });
-				res.end()
-			}
-
-		}).listen(this.conf.ghost.urlPort, '0.0.0.0');
-
-	}
-
-	// Start Ghost
-	this.startGhost = function () {
-		if (this.conf.ghost.npm) {
-			// Start Ghost Express App
-			console.log(`startGhost: npm`)
-			const
-				ghost = require('./core'),
-				ex = require('express')(),
-				errors = require('./core/server/errors')
-
-			ghost().then((ghostServer) => {
-				ex.use(ghostServer.config.paths.subdir, ghostServer.rootApp);
-				ghostServer.start(ex) // Cannot get rid of this :(
-				this.conf.ghost.app = ghostServer.rootApp
-			}).catch(function (err) {
-				errors.logErrorAndExit(err, err.context, err.help);
-			});
-		}
-		else {
-			// Start Ghost Server
-			console.log(`startGhost: ${this.conf.ghost.indexJs}`)
-			require(this.conf.ghost.indexJs)
-		}
+		let ex = this.startExpress()
+		http2.createServer(this.conf.h2Options, ex)
+			.listen(this.conf.ghost.urlPort, '0.0.0.0');
 	}
 
 	this.startHttpRedirect = function () {
@@ -174,41 +176,45 @@ function H2Ghost() {
 	}
 
 	this.start = function () {
-
 		// Cluster??
-		if (this.conf.cluster) {
+		if (this.conf.optional.cluster) {
 			// Cluster
-			const cluster = require('cluster');
+			console.log('Cluster')
 			if (cluster.isMaster) {
-				if (this.conf.ghost.start) this.startGhost()
-				setTimeout(
-					() => { for (let i = 0; i < this.conf.workers; i++)cluster.fork() },
-					this.conf.startDelay * 1000)
+				console.log('Cluster:Master')
+				if (this.conf.ghost.proxy) this.startGhost()
+				setTimeout(() => {
+					for (let i = 0; i < this.conf.optional.workers; i++) {
+						console.log(i)
+						cluster.fork()
+					}
+				}, this.conf.startDelay)
+				// HTTP Server Redirect to HTTPS
+				if (this.conf.optional.httpRedirect) this.startHttpRedirect()
 			} else {
 				// Start Server Worker
+				// startH2Server -> startExpress -> startProxy
+				console.log('Cluster:Worker')
 				this.startH2Server()
 			}
 		} else {
-			// No Cluster
-			if (this.conf.ghost.start) this.startGhost()
-			setTimeout(() => this.startH2Server(), this.conf.startDelay * 1000);
+			if (this.conf.ghost.app)
+				// startH2Server -> startExpress -> startGhost(ex)
+				this.startH2Server()
+			else {
+				if (this.conf.ghost.proxy) this.startGhost()
+				// startH2Server -> startExpress -> startProxy
+				setTimeout(() => this.startH2Server(), this.conf.startDelay)
+			}
+			// HTTP Server Redirect to HTTPS
+			if (this.conf.optional.httpRedirect) this.startHttpRedirect()
 		}
-
-		// HTTP Server Redirect to HTTPS
-		if (this.conf.optional.httpRedirect) {
-			this.startHttpRedirect()
-		};
-	}
-
-	this.printConfig = function () {
-		if (this.printConf) console.log(this.conf)
 	}
 
 	// Constructor
 	this.setEnv()
 	this.setH2GhostParam()
-	this.setHeaders()
-	this.printConfig()
+	if (this.printConf) console.log(this.conf)
 }
 
 let h2ghost = new H2Ghost()

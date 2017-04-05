@@ -4,18 +4,39 @@ const
 
 /* Required Section */
 
-// If Ghost is installed in the same machine,
-//	uncomment and fill out below line,
-//	else leave it empty.
 let ghost = {
-	start: 'npm', // proxy | npm | <empty>
-	mode: '', // production | development | testing. Default: <empty>
+	/* Ghost start mode:
+	'proxy' - h2ghost will start Ghost as backend server, and use proxy to access it.
+	'app' - h2ghost will Start Ghost as backend server, but use Ghost's express rootApp directly.
+	'' - Do not start Ghost. h2ghost use proxy to access Ghost.
+	*/
+	start: '',
 
+	/* Ghost start env, will also affect h2ghost.
+	- Override NODE_ENV.
+	- Override by command line option.
+	'production' | 'development' | 'testing'
+	*/
+	env: 'production',
+
+	/* Ghost's installation directory,
+		or location of Ghost's config file.
+		It is in following task:
+		- Starting Ghost
+		- Automatic configure proxy parameter
+	*/
 	dir: '/Volumes/HD2/JS/Downloads/code/ghost/ghost',
 
-	// If `dir` empty, use following
-	urlHost: '',
-	urlPort: 443,
+	/* If `dir` empty, fill in following manually, otherwise can be left empty.
+	'url' -
+		This should be the same as the 'url' in Ghost's config.
+	'server' -
+		If h2ghost and Ghost are running in the same server,
+			this should be the same as 'server' in Ghost's config.
+		If Ghost is running in another server,
+			'server' should point to it accordingly.
+	*/
+	url: '',
 	server: {}
 }
 
@@ -45,9 +66,6 @@ let optional = {
 	// Cluster
 	cluster: false,
 	workers: 4,
-
-	hpkp: {},
-	hsts: {},
 
 }
 
@@ -79,11 +97,9 @@ let h2Options = Object.assign(
 
 /* - - - NO CHANGE BELOW THIS LINE - - - */
 
-let config = {
+module.exports = {
 	h2Options: h2Options,
 	ghost: ghost,
 	optional: optional,
-	startDelay: (ghost.server.socketPath && ghost.start != npm) ? 20 : 0
-}
 
-module.exports = config
+}
