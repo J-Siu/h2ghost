@@ -1,32 +1,34 @@
 # Ghost Https Nodejs Proxy
 
-> *Usage* is only update to 0.2.0. A complete update will be available at 0.3.1.
+<!-- TOC -->
 
-- [Usage](#usage)
-	- [Installing](#installing)
+- [Installation](#installation)
+	- [Requirement](#requirement)
 	- [Enable nodejs to open port 80 and 443 in Linux](#enable-nodejs-to-open-port-80-and-443-in-linux)
-	- [Configuration](#configuration)
-		- [Certificate](#certificate)
-		- [URL](#url)
-		- [HTTP to HTTPS Redirect](#http-to-https-redirect)
-		- [HTTPS URL Redirect](#https-url-redirect)
-		- [Cluster](#cluster)
-	- [Start the proxy:](#start-the-proxy)
-	- [Merge with Ghost `index.js`](#merge-with-ghost-indexjs)
-		- [Ghost using IP](#ghost-using-ip)
-		- [Ghost using Unix Socket](#ghost-using-unix-socket)
+- [Usage](#usage)
+- [Configuration](#configuration)
+	- [Ghost Section (Required)](#ghost-section-required)
+	- [Certificate Section (Required)](#certificate-section-required)
+	- [Optional Section](#optional-section)
+		- [HTTP to HTTPS redirect](#http-to-https-redirect)
+		- [HTTPS URL redirect](#https-url-redirect)
+		- [Cluster *Experimental*](#cluster-experimental)
 - [Changelog](#changelog)
 - [License](#license)
 
-## Usage
+<!-- /TOC -->
 
-### Installing
+## Installation
 
 ```
-git clone https://github.com/J-Siu/ghost-https-nodejs-proxy.git
-cd ghost-https-nodejs-proxy
+git clone https://github.com/J-Siu/h2ghost.git
+cd h2ghost
 npm i
 ```
+
+### Requirement
+
+>Node.js v7.x or above.
 
 ### Enable nodejs to open port 80 and 443 in Linux
 
@@ -34,116 +36,122 @@ To enable nodejs (non-root) to open port below 1024, issue following command:
 
 `sudo setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs`
 
-### Configuration
+## Usage
 
-All configuration options are in `http2-proxy.config.js`.
+```
+node h2ghost
+```
 
-#### Certificate
+Set `NODE_ENV` with command line option:
+```
+node h2ghost --production
+node h2ghost --development
+node h2ghost --testing
+```
+
+Print out calculated configuration:
+```
+node h2ghost --config --production
+```
+
+## Configuration
+
+All configuration options are in `h2ghost.config.js`.
+
+### Ghost Section (Required)
+
+```javascript
+const ghost = {
+	start: 'app',
+	env: 'production',
+	dir: '/home/ghost/ghost',
+	url: '',
+	server: {}
+}
+```
+
+`start` - Ghost start mode.
+
+Value: '' | 'app' | 'backend'
+
+-	'' - Do not start Ghost. h2ghost use proxy to access Ghost.
+-	'app' - h2ghost will Start Ghost as backend server, but use Ghost's express rootApp directly.
+-	'backend' - h2ghost will start Ghost as backend server, and use proxy to access it.
+
+`env` - Ghost start env, will also affect h2ghost.
+
+Value: 'production' | 'development' | 'testing'
+
+- Override NODE_ENV.
+- Override by command line option.
+
+`dir` - Ghost's installation directory,	or location of Ghost's config file. It is in for starting Ghost and automatic configuring the `url` and `server` parameters.
+
+Value: '' | '<Ghost installation directory>'
+
+    If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
+
+`url` - This should have the same value the 'url' in Ghost's config.
+
+`server` - Same format as in Ghost's config.js.
+
+    If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
+
+    If Ghost is running in another server,	`server` should point to it accordingly.
+
+### Certificate Section (Required)
 
 Fill in certificate file paths.
 
 ```javascript
-// Fill in your certificate files
-const serverKey='';
-const serverCrt='';
-// Uncomment following line to use CA file.
-//const serverCa = '';
+const cert = {
+	key: fs.readFileSync(''),
+	cert: fs.readFileSync(''),
+	//ca: fs.readFileSync(''),
+	//pfs: fs.readFileSync('')
+}
 ```
 
-If CA file is used, uncomment the ca line in `exports.httpsOptions`:
-
+### Optional Section
 ```javascript
-exports.httpsOptions = {
-	key: fs.readFileSync(serverKey),
-	cert: fs.readFileSync(serverCrt),
-	// ca: fs.readFileSync(serverCa), // Uncomment this line to use CA file
-	ciphers: [
-		"ECDHE-RSA-AES256-SHA384",
-		"DHE-RSA-AES256-SHA384",
-		"ECDHE-RSA-AES256-SHA256",
-		"DHE-RSA-AES256-SHA256",
+const optional = {
+	httpRedirect: false,
+	httpRedirectPermanent: false,
+	httpPort: 80,
+
+	httpsRedirect: false,
+	httpsRedirectPermanent: false,
+
+	cluster: false,
+	workers: 4,
+}
 ```
 
-#### URL
+#### HTTP to HTTPS redirect
 
-URL of your site. This should match your Ghost `config.js` but without the `http://` or `https://` prefix.
+eg. http://example.com -> https://example.com
 
-```javascript
-// The primay fqdn of the site.
-exports.url = 'example.com';
-```
+`httpRedirect`: false(default) | true
+`httpRedirectPermanent`: false(default) | true
+`httpPort`: 80
 
-#### HTTP to HTTPS Redirect
+#### HTTPS URL redirect
 
-Enabling this will redirect all http traffic to https.
+eg. https://www.<url> -> https://<url>
 
-Example:
-- http://example.com/* -> https://example.com/*
+> This is only useful if your certificate support all the domains/sub-domains pointing to this site.
 
-```javascript
-exports.httpRedirect = true;
-exports.httpPort = 80;
-```
+`httpsRedirect`: false(default) | true
+`httpsRedirectPermanent`: false(default) | true
 
-#### HTTPS URL Redirect
+#### Cluster *Experimental*
 
-Enabling this will redirect all urls not matching `exports.url` above to be redirected.
+h2ghost will start multiple copies of http2 front end, and use proxy to access Ghost server.
 
-Example:
-- https://www.example.com -> https://example.com
-- https://www.example.com/welcome -> https://example.com/welcome
-- https://www.Other-Domein-Pointing-To-Your-Site.com -> https://example.com
+> ghost.start cannot be 'app'
 
->	This is only useful if your certificate support all	the domains/sub-domains pointing to this site.
-
-```javascript
-exports.httpsRedirect = true;
-exports.httpsPort = 443;
-```
-
-#### Cluster
-
-Cluster support. Number of `exports.workers` should at least 1 if enabled.
-
-> WARNING: Cluster MUST BE DISABLED if you are going to merge `http2-proxy.js` with Ghost `index.js`. See [below](#merge-with-ghost-indexjs).
-
-```javascript
-exports.cluster = false;
-exports.workers = 4;
-```
-
-### Start the proxy:
-
-`node http2-proxy.js`
-
-### Merge with Ghost `index.js`
-
-In a single server setup, `http2-proxy.js` can be started within Ghost `index.js` to use the same node instance.
-
-Put `http2-proxy.js` and `http2-proxy.config.js` into Ghost installation root.
-
-> Cluster must be disabled in this setup!
-> ```javascript
-> exports.cluster = false;
-> ```
-
-#### Ghost using IP
-
-If Ghost is running with IP (eg. default localhost:2368), add following line at the end of Ghost `index.js`.
-
-```javascript
-const proxy = require('./http2-proxy.js');
-```
-
-#### Ghost using Unix Socket
-
-If Ghost is running with unix socket, add following line at the end of Ghost `index.js`.
-
-```javascript
-setTimeout( function() { var proxy=require('./http2-proxy.js'); }, 25000);
-```
-
-It will wait 25sec before starting `http2-proxy`, ensuring Ghost socket file is available.
+`cluster`: false(default) | true
+`workers`: 4
 
 ## Changelog
 - 0.1.0
@@ -161,6 +169,10 @@ It will wait 25sec before starting `http2-proxy`, ensuring Ghost socket file is 
 	- Rename project to `h2ghost`
 	- Phase 1 restructure of `h2ghost.js` and `h2ghost.config.js`.
 	- `README.md` update delay to Phase 2 (next version)
+- 0.3.1
+	- `h2ghost.js` restructured to use `expressjs`.
+	- `h2ghost.config.js` restructured and simplified.
+	- `README.md` updated.
 
 ## License
 

@@ -1,8 +1,8 @@
 {
   "name": "h2ghost",
-  "version": "0.3.0",
-  "description": "Nodejs Http2/Https/Proxy for Ghost Blog",
-  "main": "http2-proxy.js",
+  "version": "0.3.1",
+  "description": "Nodejs HTTP22/HTTPS/PROXY for Ghost Blog",
+  "main": "h2ghost.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/J-Siu/h2ghost.git"
