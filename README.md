@@ -1,4 +1,10 @@
-# Ghost Https Nodejs Proxy
+# H2Ghost
+
+Nodejs HTTP2 / HTTPS / PROXY for Ghost Blog.
+
+`h2ghost` is a http2 front end for Ghost Blog, either via proxy or using Ghost's rootApp directly.
+
+It can be used as Ghost Blog start up wrapper.
 
 <!-- TOC -->
 
