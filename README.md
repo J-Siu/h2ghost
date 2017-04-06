@@ -132,7 +132,9 @@ const optional = {
 eg. http://example.com -> https://example.com
 
 `httpRedirect`: false(default) | true
+
 `httpRedirectPermanent`: false(default) | true
+
 `httpPort`: 80
 
 #### HTTPS URL redirect
@@ -142,6 +144,7 @@ eg. https://www.<url> -> https://<url>
 > This is only useful if your certificate support all the domains/sub-domains pointing to this site.
 
 `httpsRedirect`: false(default) | true
+
 `httpsRedirectPermanent`: false(default) | true
 
 #### Cluster *Experimental*
@@ -151,6 +154,7 @@ h2ghost will start multiple copies of http2 front end, and use proxy to access G
 > ghost.start cannot be 'app'
 
 `cluster`: false(default) | true
+
 `workers`: 4
 
 ## Changelog
