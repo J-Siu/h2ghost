@@ -226,9 +226,9 @@ Helmet features in following table require configuration object. Enable them by 
 
 Helmet Option | Configuration | Config Reference & Notes
 ---|---|---
-contentSecurityPolicy|{object}|https://helmetjs.github.io/docs/csp/
-frameguard|{object}|https://helmetjs.github.io/docs/frameguard/
-referrerPolicy|{object}|https://helmetjs.github.io/docs/referrer-policy/
+contentSecurityPolicy|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/csp/)
+frameguard|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/frameguard/)
+referrerPolicy|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/referrer-policy/)
 hsts|{object}|*Medium Risk* : This will lock your domain to HTTPS ONLY in client browser. Make sure you understand throughly before enabling HSTS!! [Helmet Ref.](https://helmetjs.github.io/docs/hsts/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)
 hpkp|{object}|*HIGH RISK* : IF SETUP WRONG,	THIS HAS THE POTENTIAL TO LOCK YOUR SITE/DOMAIN OUT OF CLIENT BROWSER FOR A LONG TIME! DON'T USE IT, UNLESS YOU UNDERSTAND IT!! [Helmet Ref.](https://helmetjs.github.io/docs/hpkp/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning), [Scott Helme's blog on HPKP](https://scotthelme.co.uk/hpkp-http-public-key-pinning/)
 
