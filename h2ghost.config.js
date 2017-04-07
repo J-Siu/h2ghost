@@ -26,7 +26,7 @@ const ghost = {
 		- Automatic configure proxy parameter
 	*/
 	//dir: '/home/ghost/ghost',
-	dir: '/Volumes/HD2/Downloads/code/ghost/ghost',
+	dir: '/home/ghost/ghost',
 	/* If `dir` empty, fill in 'url' and 'server' manually, otherwise can be left empty.
 
 	'url' -
@@ -47,8 +47,8 @@ const ghost = {
 This is the certificate object, same formate as https package.
 */
 const cert = {
-	key: fs.readFileSync('/Volumes/HD2/JS/code/_cert/server.key'),
-	cert: fs.readFileSync('/Volumes/HD2/JS/code/_cert/server.crt'),
+	key: fs.readFileSync('server.key'),
+	cert: fs.readFileSync('server.crt'),
 	//ca: fs.readFileSync(''),
 	//pfs: fs.readFileSync('')
 }
