@@ -2,6 +2,7 @@
 const
 	http2 = require('spdy'), // use spdy to support http2
 	express = require('express'),
+	helmet = require('helmet'),
 	proxy = require('http-proxy')
 
 function H2Ghost() {
@@ -139,14 +140,35 @@ function H2Ghost() {
 		ex.all('*', (req, res) => px.web(req, res))
 	}
 
-	/* startExpress
+	this.setupHelmet = function (ex) {
 
-	*/
-	this.startExpress = function () {
+		console.log('setupHelmet')
 
-		console.log('startExpress')
+		const tch = this.conf.helmetOptions // use shorthand
+
+		if (tch.hidePoweredBy) ex.set('x-powered-by', false)
+		if (tch.ieNoOpen) ex.use(helmet.ieNoOpen())
+		if (tch.noCache) ex.use(helmet.noCache())
+		if (tch.noSniff) ex.use(helmet.noSniff())
+		if (tch.dnsPrefetchControl) ex.use(helmet.dnsPrefetchControl())
+		if (tch.xssFilter) ex.use(helmet.xssFilter())
+
+		if (tch.contentSecurityPolicy) ex.use(helmet.contentSecurityPolicy(tch.contentSecurityPolicy))
+		if (tch.frameguard) ex.use(helmet.frameguard(tch.frameguard))
+		if (tch.referrerPolicy) ex.use(helmet.referrerPolicy(tch.referrerPolicy))
+		if (tch.hsts) ex.use(helmet.xssFilter(tch.hsts))
+		if (tch.hpkp) ex.use(helmet.xssFilter(tch.hpkp))
+	}
+
+	/* setupExpress */
+	this.setupExpress = function () {
+
+		console.log('setupExpress')
 
 		const ex = express()
+
+		// Use Helmet
+		this.setupHelmet(ex)
 
 		// HTTPS redirect
 		if (this.conf.optional.httpsRedirect) {
@@ -171,7 +193,7 @@ function H2Ghost() {
 	// Start H2 Server
 	this.startH2Server = function () {
 		console.log('startH2Server')
-		const ex = this.startExpress()
+		const ex = this.setupExpress()
 		http2.createServer(this.conf.h2Options, ex)
 			.listen(this.conf.ghost.urlPort, '0.0.0.0');
 	}
@@ -213,17 +235,17 @@ function H2Ghost() {
 			} else {
 				// Cluster Worker
 				console.log('Cluster:Worker')
-				// Flow: startH2Server -> startExpress -> startProxy
+				// Flow: startH2Server -> setupExpress -> startProxy
 				this.startH2Server()
 			}
 		} else {
 			// Cluster: false
 			if (this.conf.ghost.startApp)
-				// Flow: startH2Server -> startExpress -> startGhost(ex)
+				// Flow: startH2Server -> setupExpress -> startGhost(ex)
 				this.startH2Server()
 			else {
 				if (this.conf.ghost.startBackend) this.startGhost()
-				// Flow: startH2Server -> startExpress -> startProxy
+				// Flow: startH2Server -> setupExpress -> startProxy
 				setTimeout(() => this.startH2Server(), this.conf.startDelay)
 			}
 

@@ -1,6 +1,6 @@
 {
   "name": "h2ghost",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Nodejs HTTP2 / HTTPS / PROXY for Ghost Blog",
   "main": "h2ghost.js",
   "repository": {
@@ -24,6 +24,7 @@
   "dependencies": {
     "http-proxy": "*",
     "spdy": "*",
-    "express": "*"
+    "express": "*",
+    "helmet": "*"
   }
 }

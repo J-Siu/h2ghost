@@ -19,6 +19,7 @@ It can be used as Ghost Blog start up wrapper.
 		- [HTTP to HTTPS redirect](#http-to-https-redirect)
 		- [HTTPS URL redirect](#https-url-redirect)
 		- [Cluster *Experimental*](#cluster-experimental)
+	- [Helmet Options Section](#helmet-options-section)
 - [Changelog](#changelog)
 - [License](#license)
 
@@ -80,30 +81,46 @@ const ghost = {
 
 Value: '' | 'app' | 'backend'
 
--	'' - Do not start Ghost. h2ghost use proxy to access Ghost.
--	'app' - h2ghost will Start Ghost as backend server, but use Ghost's express rootApp directly.
--	'backend' - h2ghost will start Ghost as backend server, and use proxy to access it.
+-	`''` - Do not start Ghost. h2ghost use proxy to access Ghost.
+-	`'app'` - h2ghost will Start Ghost as backend server, but use Ghost's express rootApp directly.
+-	`'backend'` - h2ghost will start Ghost as backend server, and use proxy to access it.
+
+If `'backend'` is choosen, and Ghost use unix socket, the `socket.path` in Ghost's config.js has to be full path, or prefix the relative path with `__dirname` like following:
+
+```javascript
+config = {
+	production: {
+		/* ... snip ... */
+		server: {
+			socket: {
+				path: __dirname + './ghost.sock',
+				permissions: '0600'
+			}
+		}
+	}
+}
+```
 
 `env` - Ghost start env, will also affect h2ghost.
 
-Value: 'production' | 'development' | 'testing'
+Value: `'production'` | `'development'` | `'testing'`
 
 - Override NODE_ENV.
 - Override by command line option.
 
 `dir` - Ghost's installation directory,	or location of Ghost's config file. It is in for starting Ghost and automatic configuring the `url` and `server` parameters.
 
-Value: '' | '<Ghost installation directory>'
+Value: `''` | `'<Ghost installation directory>'`
 
-    If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
+>If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
 
-`url` - This should have the same value the 'url' in Ghost's config.
+`url` - This should have the same value the `'url'` in Ghost's config.
 
 `server` - Same format as in Ghost's config.js.
 
-    If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
+>If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
 
-    If Ghost is running in another server,	`server` should point to it accordingly.
+>If Ghost is running in another server,	`server` should point to it accordingly.
 
 ### Certificate Section (Required)
 
@@ -119,6 +136,9 @@ const cert = {
 ```
 
 ### Optional Section
+
+H2Ghost optional features.
+
 ```javascript
 const optional = {
 	httpRedirect: false,
@@ -137,21 +157,21 @@ const optional = {
 
 eg. http://example.com -> https://example.com
 
-`httpRedirect`: false(default) | true
+`httpRedirect`: `false` (default) | `true`
 
-`httpRedirectPermanent`: false(default) | true
+`httpRedirectPermanent`: `false` (default) | `true`
 
 `httpPort`: 80
 
 #### HTTPS URL redirect
 
-eg. https://www.<url> -> https://<url>
+eg. Redirect `https://somedomain.com/urlpath` to `https://YourDomain.com/urlpath`
 
 > This is only useful if your certificate support all the domains/sub-domains pointing to this site.
 
-`httpsRedirect`: false(default) | true
+`httpsRedirect`: `false` (default) | `true`
 
-`httpsRedirectPermanent`: false(default) | true
+`httpsRedirectPermanent`: `false` (default) | `true`
 
 #### Cluster *Experimental*
 
@@ -159,9 +179,58 @@ h2ghost will start multiple copies of http2 front end, and use proxy to access G
 
 > ghost.start cannot be 'app'
 
-`cluster`: false(default) | true
+`cluster`: `false` (default) | `true`
 
 `workers`: 4
+
+### Helmet Options Section
+
+`h2ghost.config.js` support configuration of `Helmet` through the `helmetOptions` block.
+
+All helmet features are controlled individually. Following is the default configuration:
+
+```javascript
+const helmetOptions = {
+	hidePoweredBy: true,
+	ieNoOpen: true,
+	noSniff: true,
+
+	dnsPrefetchControl: false,
+	noCache: false,
+	xssFilter: false,
+
+	//contentSecurityPolicy: {},
+	//frameguard: {},
+	//referrerPolicy: {},
+	//hsts: {},
+	//hpkp: {}
+}
+```
+
+The block can be devided into two categories.
+
+Helmet features in following table control by `true` (on) or `false` (off).
+
+Helmet Option | Configuration | Config Reference & Notes
+---|---|---
+hidePoweredBy|boolean|https://helmetjs.github.io/docs/hide-powered-by/
+ieNoOpen|boolean|https://helmetjs.github.io/docs/ienoopen/
+noSniff|boolean|https://helmetjs.github.io/docs/dont-sniff-mimetype/
+dnsPrefetchControl|boolean|https://helmetjs.github.io/docs/dns-prefetch-control
+noCache|boolean|https://helmetjs.github.io/docs/frameguard/
+xssFilter|boolean|https://helmetjs.github.io/docs/xss-filter/
+
+Helmet features in following table require configuration object. Enable them by uncommenting and filling in the configuration object. Pleae refer to links in reference column for configuration format.
+
+> ONLY UNCOMMENT FEATURES YOU ARE USING.
+
+Helmet Option | Configuration | Config Reference & Notes
+---|---|---
+contentSecurityPolicy|{object}|https://helmetjs.github.io/docs/csp/
+frameguard|{object}|https://helmetjs.github.io/docs/frameguard/
+referrerPolicy|{object}|https://helmetjs.github.io/docs/referrer-policy/
+hsts|{object}|*Medium Risk* : This will lock your domain to HTTPS ONLY in client browser. Make sure you understand throughly before enabling HSTS!! Ref: https://helmetjs.github.io/docs/hsts/ https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+hpkp|{object}|*HIGH RISK* : If setup wrong,	THIS HAS THE POTENTIAL TO LOCK YOUR SITE/DOMAIN OUT OF CLIENT BROWSER FOR A LONG TIME! Make sure you understand throughly before enabling HPKP! If you do not understand HPKP, DON'T USE IT!! Ref: https://helmetjs.github.io/docs/hpkp/ https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning https://scotthelme.co.uk/hpkp-http-public-key-pinning/
 
 ## Changelog
 - 0.1.0
@@ -183,6 +252,8 @@ h2ghost will start multiple copies of http2 front end, and use proxy to access G
 	- `h2ghost.js` restructured to use `expressjs`.
 	- `h2ghost.config.js` restructured and simplified.
 	- `README.md` updated.
+- 0.3.2
+	- Support `helmet` configuration in `h2ghost.config.js`.
 
 ## License
 
