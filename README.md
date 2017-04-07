@@ -20,6 +20,7 @@ It can be used as Ghost Blog start up wrapper.
 		- [HTTPS URL redirect](#https-url-redirect)
 		- [Cluster *Experimental*](#cluster-experimental)
 	- [Helmet Options Section](#helmet-options-section)
+	- [HTTP2 Options Section](#http2-options-section)
 - [Changelog](#changelog)
 - [License](#license)
 
@@ -35,7 +36,7 @@ npm i
 
 ### Requirement
 
->Node.js v7.x or above.
+Node.js v7.x or above.
 
 ### Enable nodejs to open port 80 and 443 in Linux
 
@@ -231,6 +232,42 @@ frameguard|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/frameguard/)
 referrerPolicy|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/referrer-policy/)
 hsts|{object}|*Medium Risk* : This will lock your domain to HTTPS ONLY in client browser. Make sure you understand throughly before enabling HSTS!! [Helmet Ref.](https://helmetjs.github.io/docs/hsts/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)
 hpkp|{object}|*HIGH RISK* : IF SETUP WRONG,	THIS HAS THE POTENTIAL TO LOCK YOUR SITE/DOMAIN OUT OF CLIENT BROWSER FOR A LONG TIME! DON'T USE IT, UNLESS YOU UNDERSTAND IT!! [Helmet Ref.](https://helmetjs.github.io/docs/hpkp/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning), [Scott Helme's blog on HPKP](https://scotthelme.co.uk/hpkp-http-public-key-pinning/)
+
+### HTTP2 Options Section
+
+These are the options used to setup https/http2 and should not require modification in most cases.
+
+```javascript
+const h2Options = Object.assign(
+	cert,
+	{
+		secureOptions: constants.SSL_OP_NO_TLSv1 | constants.SSL_OP_NO_TLSv1_1,
+		ciphers: [
+			'ECDHE-ECDSA-AES256-GCM-SHA384',
+			'ECDHE-RSA-AES256-GCM-SHA384',
+			'ECDHE-ECDSA-AES128-GCM-SHA256',
+			'ECDHE-RSA-AES128-GCM-SHA256',
+			'HIGH',
+			'!aNULL',
+			'!eNULL',
+			'!EXPORT',
+			'!DES',
+			'!RC4',
+			'!MD5',
+			'!PSK',
+			'!SRP',
+			'!CAMELLIA'
+		].join(':'),
+		// SPDY(HTTP2) package specific option
+		spdy: { protocols: ['h2', 'http/1.1'] }
+	})
+```
+
+Config References:
+- [secureOptions](https://nodejs.org/api/crypto.html#crypto_openssl_options)
+- [ciphers](//nodejs.org/api/tls.html#tls_modifying_the_default_tls_cipher_suite)
+- [spdy](//github.com/spdy-http2/node-spdy)
+
 
 ## Changelog
 - 0.1.0
