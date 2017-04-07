@@ -76,12 +76,13 @@ function H2Ghost() {
 				tcg.startApp = true
 			else if (tcg.start === 'backend')
 				tcg.startBackend = true
-			else
+			else if (tgc.start != '')
 				console.log(`h2ghost.config.js ghost.start invalid value: ${tcg.start}`)
 		}
 
 		// Confinue with auto config if `ghost.dir` is available
 		if (tcg.dir && tcg.dir.length > 0) {
+			// Auto Config
 			const
 				path = require('path'),
 				conf = require(path.join(tcg.dir, 'config.js'))[tcg.env],
@@ -90,7 +91,6 @@ function H2Ghost() {
 			tcg.urlHost = urlObj.host
 			tcg.urlPort = (!urlObj.port || urlObj.port === '') ? 443 : urlObj.port
 
-			// If using proxy, setup ghost server info
 			if (conf.server.host)
 				tcg.server = {
 					host: conf.server.host,
@@ -98,12 +98,13 @@ function H2Ghost() {
 				}
 			else tcg.server = { socketPath: conf.server.socket.path }
 		} else {
-			// Manual config
+			// Manual Config
 			const
 				urlObj = new url(tcg.url)
 
 			tcg.urlHost = urlObj.host
 			tcg.urlPort = (!urlObj.port || urlObj.port === '') ? 443 : urlObj.port
+			// No action for tcg.server here, filled out in h2ghost.config.js.
 		}
 
 		// Set h2 server startDelay in ms
@@ -119,6 +120,7 @@ function H2Ghost() {
 			ghost = require(`${this.conf.ghost.dir}/core`),
 			errors = require(`${this.conf.ghost.dir}/core/server/errors`)
 
+		// This part come from Ghost's index.js
 		ghost().then((ghostServer) => {
 			console.log(`startGhost: Done`)
 			app.use(ghostServer.config.paths.subdir, ghostServer.rootApp)
@@ -128,7 +130,7 @@ function H2Ghost() {
 		})
 	}
 
-	// Create http-proxy if proxy mode is used
+	// Start Proxy to backend Ghost
 	this.startProxy = function (ex) {
 		console.log('startProxy')
 		const
@@ -140,6 +142,7 @@ function H2Ghost() {
 		ex.all('*', (req, res) => px.web(req, res))
 	}
 
+	// Setup Helmet
 	this.setupHelmet = function (ex) {
 
 		console.log('setupHelmet')
@@ -160,7 +163,7 @@ function H2Ghost() {
 		if (tch.hpkp) ex.use(helmet.xssFilter(tch.hpkp))
 	}
 
-	/* setupExpress */
+	// Setup Express
 	this.setupExpress = function () {
 
 		console.log('setupExpress')
@@ -198,6 +201,7 @@ function H2Ghost() {
 			.listen(this.conf.ghost.urlPort, '0.0.0.0');
 	}
 
+	// Start http server to redirect traffic to https
 	this.startHttpRedirect = function () {
 		console.log('startHttpRedirect')
 		const
@@ -209,6 +213,7 @@ function H2Ghost() {
 		}).listen(this.conf.optional.httpPort, '0.0.0.0');
 	}
 
+	// Start H2Ghost
 	this.start = function () {
 		// Cluster??
 		if (this.conf.optional.cluster) {
