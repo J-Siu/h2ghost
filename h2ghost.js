@@ -1,15 +1,20 @@
-// HTTP2
 const
 	http2 = require('spdy'), // use spdy to support http2
 	express = require('express'),
 	helmet = require('helmet'),
 	proxy = require('http-proxy')
 
+/* H2Ghost Object
+*/
 function H2Ghost() {
 	this.conf = require('./h2ghost.config.js')
 	this.printConf = false
 
-	// Set ENV
+	/* Set ENV
+		GHOST_NODE_VERSION_CHECK = false
+		Get NODE_ENV in following order:
+			ENV (dev if undefined) -> config file -> cmdln
+	*/
 	this.setEnv = function () {
 		console.log('setEnv')
 
@@ -53,7 +58,18 @@ function H2Ghost() {
 
 	}
 
-	// Config Ghost parameter used by H2Ghost
+	/* Config Ghost parameter used by H2Ghost
+		Populate
+			this.conf.ghost
+				.startApp
+				.startBackend
+ 		Fix value following parameters:
+			this.conf.ghost
+				.dir	: Ghost installation/config dir
+				.urlHost	: Front end url
+				.urlPort	: Front end port
+				.server	: Proxy connection to Ghost { host, port } or { socketPath }
+	*/
 	this.setH2GhostParam = function () {
 		console.log('setH2GhostParam')
 
@@ -108,10 +124,13 @@ function H2Ghost() {
 		}
 
 		// Set h2 server startDelay in ms
-		this.conf.startDelay = (tcg.server.socket && !tcg.app) ? 20 * 1000 : 0
+		this.conf.startDelay = (tcg.server.socket && !tcg.app) ? tcg.socketDelay * 1000 : 0
 	}
 
-	// Start Ghost
+	/* Start Ghost
+		@ex
+			Mount Ghost app into ex if defined, else create express()
+	*/
 	this.startGhost = function (ex) {
 		console.log('startGhost: Starting')
 
@@ -130,7 +149,10 @@ function H2Ghost() {
 		})
 	}
 
-	// Start Proxy to backend Ghost
+	/* Start Proxy to backend Ghost
+		@ex
+			Mount proxy into ex
+	*/
 	this.startProxy = function (ex) {
 		console.log('startProxy')
 		const
@@ -142,7 +164,10 @@ function H2Ghost() {
 		ex.all('*', (req, res) => px.web(req, res))
 	}
 
-	// Setup Helmet
+	/* Setup Helmet
+		@ex
+			Setup Helmet for ex base on config file
+	*/
 	this.setupHelmet = function (ex) {
 
 		console.log('setupHelmet')
@@ -163,7 +188,25 @@ function H2Ghost() {
 		if (tch.hpkp) ex.use(helmet.xssFilter(tch.hpkp))
 	}
 
-	// Setup Express
+	/* Setup HttpsRedirect
+		@ex
+			Setup https redirect for ex
+	*/
+	this.setupHttpsRedirect = function (ex) {
+		const redirectCode = (this.conf.optional.httpRedirectPermanent) ? 308 : 307
+		ex.all('*', (req, res, next) => {
+			if (req.headers.host != this.conf.ghost.urlHost) {
+				res.writeHead(redirectCode, { 'location': `https://${this.conf.ghost.urlHost}${req.url}` });
+				res.end()
+			} else next()
+		})
+	}
+
+	/* Setup Express
+		setupHelmet
+		setupHttpsRedirect
+		startGhost | startProxy
+	*/
 	this.setupExpress = function () {
 
 		console.log('setupExpress')
@@ -174,15 +217,8 @@ function H2Ghost() {
 		this.setupHelmet(ex)
 
 		// HTTPS redirect
-		if (this.conf.optional.httpsRedirect) {
-			const redirectCode = (this.conf.optional.httpRedirectPermanent) ? 308 : 307
-			ex.all('*', (req, res, next) => {
-				if (req.headers.host != this.conf.ghost.urlHost) {
-					res.writeHead(redirectCode, { 'location': `https://${this.conf.ghost.urlHost}${req.url}` });
-					res.end()
-				} else next()
-			})
-		}
+		if (this.conf.optional.httpsRedirect)
+			this.setupHttpsRedirect(ex)
 
 		// Mount APP or Proxy
 		if (this.conf.ghost.startApp)
@@ -193,7 +229,9 @@ function H2Ghost() {
 		return ex
 	}
 
-	// Start H2 Server
+	/* Start H2 Server
+		setupExpress
+	*/
 	this.startH2Server = function () {
 		console.log('startH2Server')
 		const ex = this.setupExpress()
@@ -201,7 +239,8 @@ function H2Ghost() {
 			.listen(this.conf.ghost.urlPort, '0.0.0.0');
 	}
 
-	// Start http server to redirect traffic to https
+	/* Start http to https redirect server
+	*/
 	this.startHttpRedirect = function () {
 		console.log('startHttpRedirect')
 		const
@@ -213,7 +252,21 @@ function H2Ghost() {
 		}).listen(this.conf.optional.httpPort, '0.0.0.0');
 	}
 
-	// Start H2Ghost
+	/* Start H2Ghost
+		Cluster?
+			true
+				cluster master
+					startGhost?
+					start workers
+					startHttpRedirect?
+				cluster worker
+					startH2Serer
+			false
+				ghost.startBackend?
+					startGhost
+				startH2Server
+				startHttpRedirect?
+	*/
 	this.start = function () {
 		// Cluster??
 		if (this.conf.optional.cluster) {
@@ -230,7 +283,7 @@ function H2Ghost() {
 
 				setTimeout(() => {
 					for (let i = 0; i < this.conf.optional.workers; i++) {
-						console.log(i)
+						console.log(`Cluster:Worker(${i})`)
 						cluster.fork()
 					}
 				}, this.conf.startDelay)
@@ -245,21 +298,18 @@ function H2Ghost() {
 			}
 		} else {
 			// Cluster: false
-			if (this.conf.ghost.startApp)
-				// Flow: startH2Server -> setupExpress -> startGhost(ex)
-				this.startH2Server()
-			else {
-				if (this.conf.ghost.startBackend) this.startGhost()
-				// Flow: startH2Server -> setupExpress -> startProxy
-				setTimeout(() => this.startH2Server(), this.conf.startDelay)
-			}
+
+			if (this.conf.ghost.startBackend) this.startGhost()
+
+			// Flow: startH2Server -> setupExpress -> startProxy | startGhost(ex)
+			setTimeout(() => this.startH2Server(), this.conf.startDelay)
 
 			if (this.conf.optional.httpRedirect) this.startHttpRedirect()
 
 		}
 	}
 
-	// Constructor
+	/* Constructor */
 	this.setEnv()
 	this.setH2GhostParam()
 	if (this.printConf) console.log(this.conf)
