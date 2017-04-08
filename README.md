@@ -114,17 +114,17 @@ Value: `'production'` | `'development'` | `'testing'`
 
 Value: `''` | `'<Ghost installation directory>'`
 
->If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
+>>If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
 
 `url` - This should have the same value the `'url'` in Ghost's config.
 
 `server` - Same format as in Ghost's config.js.
 
+>>If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
+
+>>If Ghost is running in another server,	`server` should point to it accordingly.
+
 `socketDelay` - If backend Ghost use unix socket, delay frontend start in second. Default 20sec.
-
->If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
-
->If Ghost is running in another server,	`server` should point to it accordingly.
 
 ### Certificate Section (Required)
 
@@ -171,7 +171,7 @@ eg. http://example.com -> https://example.com
 
 eg. Redirect `https://somedomain.com/urlpath` to `https://YourDomain.com/urlpath`
 
-> This is only useful if your certificate support all the domains/sub-domains pointing to this site.
+>> This is only useful if your certificate support all the domains/sub-domains pointing to this site.
 
 `httpsRedirect`: `false` (default) | `true`
 
@@ -181,7 +181,7 @@ eg. Redirect `https://somedomain.com/urlpath` to `https://YourDomain.com/urlpath
 
 h2ghost will start multiple copies of http2 front end, and use proxy to access Ghost server.
 
-> ghost.start cannot be 'app'
+>> ghost.start cannot be 'app'
 
 `cluster`: `false` (default) | `true`
 
@@ -226,7 +226,7 @@ xssFilter|boolean|[Helmet Ref.](https://helmetjs.github.io/docs/xss-filter/)
 
 Helmet features in following table require configuration object. Enable them by uncommenting and filling in the configuration object. Pleae refer to links in reference column for configuration format.
 
-> ONLY UNCOMMENT FEATURES YOU ARE USING.
+>> ONLY UNCOMMENT FEATURES YOU ARE USING.
 
 Helmet Option | Configuration | Config Reference & Notes
 ---|---|---
