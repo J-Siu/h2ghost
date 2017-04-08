@@ -74,7 +74,8 @@ const ghost = {
 	env: 'production',
 	dir: '/home/ghost/ghost',
 	url: '',
-	server: {}
+	server: {},
+	socketDelay: 20
 }
 ```
 
@@ -118,6 +119,8 @@ Value: `''` | `'<Ghost installation directory>'`
 `url` - This should have the same value the `'url'` in Ghost's config.
 
 `server` - Same format as in Ghost's config.js.
+
+`socketDelay` - If backend Ghost use unix socket, delay frontend start in second. Default 20sec.
 
 >If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
 
