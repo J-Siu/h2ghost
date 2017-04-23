@@ -184,8 +184,8 @@ function H2Ghost() {
 		if (tch.contentSecurityPolicy) ex.use(helmet.contentSecurityPolicy(tch.contentSecurityPolicy))
 		if (tch.frameguard) ex.use(helmet.frameguard(tch.frameguard))
 		if (tch.referrerPolicy) ex.use(helmet.referrerPolicy(tch.referrerPolicy))
-		if (tch.hsts) ex.use(helmet.xssFilter(tch.hsts))
-		if (tch.hpkp) ex.use(helmet.xssFilter(tch.hpkp))
+		if (tch.hsts) ex.use(helmet.hsts(tch.hsts))
+		if (tch.hpkp) ex.use(helmet.hpkp(tch.hpkp))
 	}
 
 	/* Setup HttpsRedirect
