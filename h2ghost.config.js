@@ -26,8 +26,8 @@ const ghost = {
 		- Starting Ghost
 		- Automatic configure proxy parameter
 	*/
-	//dir: '/home/ghost/ghost',
-	dir: '/home/ghost/ghost',
+	dir: '',
+
 	/* If `dir` empty, fill in 'url' and 'server' manually, otherwise can be left empty.
 
 		'url' -
@@ -113,7 +113,7 @@ const helmetOptions = {
 	/* HPKP - HIGH RISK!!
 		If setup wrong,
 			THIS HAS THE POTENTIAL TO LOCK YOUR SITE/DOMAIN OUT OF CLIENT BROWSER FOR A LONG TIME!!
-		Make sure you understand throughly before enabling HPKP!!
+		Make sure you understand thoroughly before enabling HPKP!!
 		If you do not understand HPKP, DON'T USE IT!!
 		HPKP Reference:
 			https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning

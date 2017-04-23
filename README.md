@@ -87,7 +87,7 @@ Value: '' | 'app' | 'backend'
 -	`'app'` - h2ghost will Start Ghost as backend server, but use Ghost's express rootApp directly.
 -	`'backend'` - h2ghost will start Ghost as backend server, and use proxy to access it.
 
-If `'backend'` is choosen, and Ghost use unix socket, the `socket.path` in Ghost's config.js has to be full path, or prefix the relative path with `__dirname` like following:
+If `'backend'` is chosen, and Ghost use unix socket, the `socket.path` in Ghost's config.js has to be full path, or prefix the relative path with `__dirname` like following:
 
 ```javascript
 config = {
@@ -114,15 +114,17 @@ Value: `'production'` | `'development'` | `'testing'`
 
 Value: `''` | `'<Ghost installation directory>'`
 
->>If `dir` is left empty, 'url' and 'server' must be filled manually, otherwise can be left empty.
+> `url` and `server` must be configured manually if `dir` is empty.
+
+> `url` and `server` can be left empty if `dir` is configured.
 
 `url` - This should have the same value the `'url'` in Ghost's config.
 
 `server` - Same format as in Ghost's config.js.
 
->>If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
+>If h2ghost and Ghost are running in the same server, this should be the same as `server` in Ghost's config.
 
->>If Ghost is running in another server,	`server` should point to it accordingly.
+>If Ghost is running in another server,	`server` should point to it accordingly.
 
 `socketDelay` - If backend Ghost use unix socket, delay frontend start in second. Default 20sec.
 
@@ -171,7 +173,7 @@ eg. http://example.com -> https://example.com
 
 eg. Redirect `https://somedomain.com/urlpath` to `https://YourDomain.com/urlpath`
 
->> This is only useful if your certificate support all the domains/sub-domains pointing to this site.
+> This is only useful if your certificate support all the domains/sub-domains pointing to this site.
 
 `httpsRedirect`: `false` (default) | `true`
 
@@ -181,7 +183,7 @@ eg. Redirect `https://somedomain.com/urlpath` to `https://YourDomain.com/urlpath
 
 h2ghost will start multiple copies of http2 front end, and use proxy to access Ghost server.
 
->> ghost.start cannot be 'app'
+> ghost.start cannot be 'app'
 
 `cluster`: `false` (default) | `true`
 
@@ -224,7 +226,7 @@ dnsPrefetchControl|boolean|[Helmet Ref.](https://helmetjs.github.io/docs/dns-pre
 noCache|boolean|[Helmet Ref.](https://helmetjs.github.io/docs/frameguard/)
 xssFilter|boolean|[Helmet Ref.](https://helmetjs.github.io/docs/xss-filter/)
 
-Helmet features in following table require configuration object. Enable them by uncommenting and filling in the configuration object. Pleae refer to links in reference column for configuration format.
+Helmet features in following table require configuration object. Enable them by uncommenting and filling in the configuration object. Please refer to links in reference column for configuration format.
 
 >> ONLY UNCOMMENT FEATURES YOU ARE USING.
 
@@ -233,7 +235,7 @@ Helmet Option | Configuration | Config Reference & Notes
 contentSecurityPolicy|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/csp/)
 frameguard|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/frameguard/)
 referrerPolicy|{object}|[Helmet Ref.](https://helmetjs.github.io/docs/referrer-policy/)
-hsts|{object}|*Medium Risk* : This will lock your domain to HTTPS ONLY in client browser. Make sure you understand throughly before enabling HSTS!! [Helmet Ref.](https://helmetjs.github.io/docs/hsts/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)
+hsts|{object}|*Medium Risk* : This will lock your domain to HTTPS ONLY in client browser. Make sure you understand thoroughly before enabling HSTS!! [Helmet Ref.](https://helmetjs.github.io/docs/hsts/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)
 hpkp|{object}|*HIGH RISK* : IF SETUP WRONG,	THIS HAS THE POTENTIAL TO LOCK YOUR SITE/DOMAIN OUT OF CLIENT BROWSER FOR A LONG TIME! DON'T USE IT, UNLESS YOU UNDERSTAND IT!! [Helmet Ref.](https://helmetjs.github.io/docs/hpkp/), [Wikipedia](https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning), [Scott Helme's blog on HPKP](https://scotthelme.co.uk/hpkp-http-public-key-pinning/)
 
 ### HTTP2 Options Section
@@ -294,6 +296,9 @@ Config References:
 	- `README.md` updated.
 - 0.3.2
 	- Support `helmet` configuration in `h2ghost.config.js`.
+- 0.3.3
+	- Fix HPKP and HSTS (https://github.com/J-Siu/h2ghost/issues/1).
+	-
 
 ## License
 
