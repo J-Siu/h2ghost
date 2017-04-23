@@ -298,7 +298,6 @@ Config References:
 	- Support `helmet` configuration in `h2ghost.config.js`.
 - 0.3.3
 	- Fix HPKP and HSTS (https://github.com/J-Siu/h2ghost/issues/1).
-	-
 
 ## License
 
