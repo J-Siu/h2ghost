@@ -1,4 +1,4 @@
-# H2Ghost
+# H2Ghost [![Paypal donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=HZF49NM9D35SJ&no_recurring=0&currency_code=CAD)
 
 Nodejs HTTP2 / HTTPS / PROXY for Ghost Blog.
 
@@ -6,6 +6,7 @@ Nodejs HTTP2 / HTTPS / PROXY for Ghost Blog.
 
 It can be used as Ghost Blog start up wrapper.
 
+### Table Of Content
 <!-- TOC -->
 
 - [Installation](#installation)
